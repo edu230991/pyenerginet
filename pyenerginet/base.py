@@ -49,3 +49,19 @@ class EnerginetBaseClass:
             to_drop = re.findall(r'"(.*?)"', params["filter"])[0]
             df = df.drop(columns=to_drop)
         return df
+
+    def _select_columns_request(
+        self,
+        url: str,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        columns: str = "all",
+        filter_key: str = None,
+        filter_value: str = None,
+    ):
+        params = self._get_params(start, end, filter_key, filter_value)
+        df = self._base_request(url, params)
+        df = df.tz_convert(start.tz)
+        if columns != "all":
+            df = df[columns]
+        return df

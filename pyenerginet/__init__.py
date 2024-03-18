@@ -5,29 +5,6 @@ from pyenerginet.base import EnerginetBaseClass
 
 
 class EnerginetData(EnerginetBaseClass):
-    def get_production_per_municipality(
-        self,
-        start: pd.Timestamp,
-        end: pd.Timestamp,
-        municipality_no: int,
-        columns: str = "all",
-    ) -> pd.DataFrame:
-        """Downloads production per municipality from Energinet API:
-        https://www.energidataservice.dk/tso-electricity/ProductionMunicipalityHour
-
-        :param start: dt start
-        :param end: dt end
-        :param municipality_no: For munucipality numbers see: https://en.wikipedia.org/wiki/List_of_municipalities_of_Denmark
-        :param columns: defaults to "all". otherwise list of columns to return among
-            ('OffshoreWindLt100MW_MWh', 'OffshoreWindGe100MW_MWh', 'OnshoreWindMWh', 'ThermalPowerMWh')
-        """
-        url = self.base_url + "/ProductionMunicipalityHour"
-        params = self._get_params(start, end, "MunicipalityNo", municipality_no)
-        df = self._base_request(url, params)
-        df = df.tz_convert(start.tz)
-        if columns != "all":
-            df = df[columns]
-        return df
 
     def get_elspot_prices(
         self,
@@ -63,6 +40,38 @@ class EnerginetData(EnerginetBaseClass):
         df = df.tz_convert(start.tz)
         return df
 
+    def get_production_per_municipality(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        municipality_no: int = None,
+        columns: str = "all",
+    ) -> pd.DataFrame:
+        """Downloads production per municipality from Energinet API:
+        https://www.energidataservice.dk/tso-electricity/ProductionMunicipalityHour
+
+        :param start: dt start
+        :param end: dt end
+        :param municipality_no: For munucipality numbers see: https://en.wikipedia.org/wiki/List_of_municipalities_of_Denmark
+        :param columns: defaults to "all". otherwise list of columns to return among
+            ('OffshoreWindLt100MW_MWh', 'OffshoreWindGe100MW_MWh', 'OnshoreWindMWh', 'ThermalPowerMWh')
+        """
+        url = self.base_url + "/ProductionMunicipalityHour"
+        filter_key = "MunicipalityNo" if municipality_no is not None else None
+        filter_value = municipality_no
+        if (columns != "all") and (municipality_no is None):
+            columns = (
+                ["MunicipalityNo"] + [columns]
+                if ~isinstance(columns, list)
+                else columns
+            )
+        df = self._select_columns_request(
+            url, start, end, columns, filter_key, filter_value
+        )
+        if municipality_no is None:
+            df = df.pivot(columns="MunicipalityNo")
+        return df
+
     def get_prodcons_settlement(
         self,
         start: pd.Timestamp,
@@ -80,16 +89,11 @@ class EnerginetData(EnerginetBaseClass):
         :param columns: defaults to "all". otherwise list of columns to return
         """
         url = self.base_url + "/ProductionConsumptionSettlement"
-        params = self._get_params(
-            start,
-            end,
-            "PriceArea" if price_area is not None else None,
-            price_area,
+        filter_key = "PriceArea" if price_area is not None else None
+        filter_value = price_area
+        df = self._select_columns_request(
+            url, start, end, columns, filter_key, filter_value
         )
-        df = self._base_request(url, params)
-        df = df.tz_convert(start.tz)
-        if columns != "all":
-            df = df[columns]
         return df
 
     def get_fcr_dk1(
@@ -108,14 +112,7 @@ class EnerginetData(EnerginetBaseClass):
         :param columns: defaults to "all". otherwise list of columns to return
         """
         url = self.base_url + "/FcrDK1"
-        params = self._get_params(
-            start,
-            end,
-        )
-        df = self._base_request(url, params)
-        df = df.tz_convert(start.tz)
-        if columns != "all":
-            df = df[columns]
+        df = self._select_columns_request(url, start, end, columns)
         return df
 
     def get_fcr_dk1_old(
@@ -132,12 +129,7 @@ class EnerginetData(EnerginetBaseClass):
         :param columns: defaults to "all". otherwise list of columns to return
         """
         url = self.base_url + "/FcrReservesDK1"
-        params = self._get_params(
-            start,
-            end,
-        )
-        df = self._base_request(url, params)
-        df = df.tz_convert(start.tz)
-        if columns != "all":
-            df = df[columns]
+        df = self._select_columns_request(url, start, end, columns)
         return df
+
+    # def get_balancing()

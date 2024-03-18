@@ -15,7 +15,7 @@ def end():
 
 @pytest.fixture
 def start(end):
-    return end - pd.Timedelta("7d")
+    return end - pd.Timedelta("2d")
 
 
 @pytest.mark.parametrize("tz", ["CET", "UTC"])
@@ -29,3 +29,23 @@ def test_get_elspot_prices(tz, start, end, energinetdata):
     assert pricedf.shape[1]
     assert isinstance(pricedf.index, pd.DatetimeIndex)
     assert pricedf.index.tz == start.tz
+
+
+@pytest.mark.parametrize(
+    "tz,no,cols",
+    [
+        (tz, no, cols)
+        for cols in ("all", "SolarMWh")
+        for no in (None, 101)
+        for tz in ("CET", "UTC")
+    ],
+)
+def test_get_production_per_municipality(tz, no, cols, start, end, energinetdata):
+    start = start.tz_convert(tz)
+    end = end.tz_convert(tz)
+    df = energinetdata.get_production_per_municipality(
+        start, end, municipality_no=no, columns=cols
+    )
+    assert df.shape[0]
+    assert isinstance(df.index, pd.DatetimeIndex)
+    assert df.index.tz == start.tz
