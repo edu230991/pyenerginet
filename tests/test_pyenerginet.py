@@ -1,0 +1,31 @@
+import pytest
+import pandas as pd
+from pyenerginet import EnerginetData
+
+
+@pytest.fixture
+def energinetdata():
+    return EnerginetData()
+
+
+@pytest.fixture
+def end():
+    return pd.Timestamp("today").normalize().tz_localize("UTC")
+
+
+@pytest.fixture
+def start(end):
+    return end - pd.Timedelta("7d")
+
+
+@pytest.mark.parametrize("tz", ["CET", "UTC"])
+def test_get_elspot_prices(tz, start, end, energinetdata):
+    """Tests that the 'get_elspot_prices' method returns a pandas dataframe
+    with multiple rows and columns"""
+    start = start.tz_convert(tz)
+    end = end.tz_convert(tz)
+    pricedf = energinetdata.get_elspot_prices(start, end)
+    assert pricedf.shape[0]
+    assert pricedf.shape[1]
+    assert isinstance(pricedf.index, pd.DatetimeIndex)
+    assert pricedf.index.tz == start.tz
