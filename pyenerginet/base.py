@@ -58,10 +58,54 @@ class EnerginetBaseClass:
         columns: str = "all",
         filter_key: str = None,
         filter_value: str = None,
-    ):
+    ) -> pd.DataFrame:
+        """Runs base request for given url formatting dataframe as timeseries
+        and selecting a subset of columns.
+
+        :param url: url from energinet to call
+        :param start: dt start
+        :param end: dt end
+        :param columns: defaults to "all"
+        :param filter_key: column name to apply filter to, defaults to None
+        :param filter_value: value of filter to apply, defaults to None
+        """
         params = self._get_params(start, end, filter_key, filter_value)
         df = self._base_request(url, params)
         df = df.tz_convert(start.tz)
+
         if columns != "all":
             df = df[columns]
+        return df
+
+    def _pivot_request(
+        self,
+        url: str,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        columns: str = "all",
+        key: str = None,
+        filter_value: str = None,
+    ) -> pd.DataFrame:
+        """Runs base request for given url formatting dataframe as timeseries
+        and selecting a subset of columns, after pivoting in to make the data time-indexed.
+
+        :param url: url from energinet to call
+        :param start: dt start
+        :param end: dt end
+        :param columns: defaults to "all"
+        :param key: column name to apply filter to, and pivot around defaults to None
+        :param filter_value: value of filter to apply, defaults to None
+        """
+        filter_key = key if filter_value is not None else None
+        df = self._select_columns_request(
+            url, start, end, "all", filter_key, filter_value
+        )
+        if key is not None and key in df.columns:
+            df = df.pivot(columns=key)
+        if columns != "all":
+            df = df[columns]
+        if isinstance(df, pd.DataFrame):
+            if isinstance(df.columns, pd.MultiIndex):
+                if len(df.columns.levels[0]) == 1:
+                    df = df.droplevel(0, axis=1)
         return df

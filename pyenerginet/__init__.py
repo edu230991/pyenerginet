@@ -23,21 +23,14 @@ class EnerginetData(EnerginetBaseClass):
         :param currency: one in ("EUR", "DKK") defaults to "DKK"
         """
         url = self.base_url + "/Elspotprices"
-        params = self._get_params(
+        df = self._pivot_request(
+            url,
             start,
             end,
-            "PriceArea" if price_area is not None else None,
+            "PriceArea",
             price_area,
         )
-        df = self._base_request(url, params)
-        if price_area is None:
-            df = (
-                df.pivot(columns="PriceArea").filter(like=currency).droplevel(0, axis=1)
-            )
-            df.columns.name = None
-        else:
-            df = df.filter(like=currency).squeeze()
-        df = df.tz_convert(start.tz)
+        df = df.filter(like=currency).squeeze()
         return df
 
     def get_production_per_municipality(
@@ -57,19 +50,14 @@ class EnerginetData(EnerginetBaseClass):
             ('OffshoreWindLt100MW_MWh', 'OffshoreWindGe100MW_MWh', 'OnshoreWindMWh', 'ThermalPowerMWh')
         """
         url = self.base_url + "/ProductionMunicipalityHour"
-        filter_key = "MunicipalityNo" if municipality_no is not None else None
-        filter_value = municipality_no
-        if (columns != "all") and (municipality_no is None):
-            columns = (
-                ["MunicipalityNo"] + [columns]
-                if ~isinstance(columns, list)
-                else columns
-            )
-        df = self._select_columns_request(
-            url, start, end, columns, filter_key, filter_value
+        df = self._pivot_request(
+            url,
+            start,
+            end,
+            "MunicipalityNo",
+            municipality_no,
+            columns,
         )
-        if municipality_no is None:
-            df = df.pivot(columns="MunicipalityNo")
         return df
 
     def get_prodcons_settlement(
@@ -120,7 +108,7 @@ class EnerginetData(EnerginetBaseClass):
         start: pd.Timestamp,
         end: pd.Timestamp,
         columns: str = "all",
-    ):
+    ) -> pd.DataFrame:
         """Downloads DK1 FCR data from Energinet using an outdated url (for data pre-2021)
         https://www.energidataservice.dk/tso-electricity/FcrReservesDK1
 
@@ -128,8 +116,25 @@ class EnerginetData(EnerginetBaseClass):
         :param end: dt end
         :param columns: defaults to "all". otherwise list of columns to return
         """
-        url = self.base_url + "/FcrReservesDK1"
+        url = self.base_url + "/RegulatingBalancePowerdata"
         df = self._select_columns_request(url, start, end, columns)
         return df
 
-    # def get_balancing()
+    def get_balancing(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        price_area: str = None,
+        columns: str = "all",
+    ) -> pd.DataFrame:
+        """Gets balancing data from
+        https://www.energidataservice.dk/tso-electricity/RegulatingBalancePowerdata
+
+        :param start: dt start
+        :param end: dt end
+        :param price_area: one in ('DK1', 'DK2'), defaults to None
+        :param columns: defaults to "all"
+        """
+        url = self.base_url + "/RegulatingBalancePowerdata"
+        df = self._pivot_request(url, start, end, "PriceArea", price_area, columns)
+        return df

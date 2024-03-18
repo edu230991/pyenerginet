@@ -49,3 +49,21 @@ def test_get_production_per_municipality(tz, no, cols, start, end, energinetdata
     assert df.shape[0]
     assert isinstance(df.index, pd.DatetimeIndex)
     assert df.index.tz == start.tz
+
+
+@pytest.mark.parametrize(
+    "tz,area,cols",
+    [
+        (tz, area, cols)
+        for cols in ("all", "ImbalancePriceEUR", ["ImbalanceMWh", "ImbalancePriceEUR"])
+        for area in ("DK1", "DK2", None)
+        for tz in ("CET", "UTC")
+    ],
+)
+def test_get_balancing(tz, area, cols, start, end, energinetdata):
+    start = start.tz_convert(tz)
+    end = end.tz_convert(tz)
+    df = energinetdata.get_balancing(start, end, area, cols)
+    assert df.shape[0]
+    assert isinstance(df.index, pd.DatetimeIndex)
+    assert df.index.tz == start.tz
