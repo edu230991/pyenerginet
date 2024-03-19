@@ -1,0 +1,22 @@
+[project]
+name = "pyenerginet"
+version = "0.0.1"
+authors = [
+  { name="Edoardo Simioni", email="edu230991@gmail.com" },
+]
+description = "A package to extract data from Energinet and Energy Data Service"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/edu230991/pyenerginet"
+Issues = "https://github.com/edu230991/pyenerginet/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
