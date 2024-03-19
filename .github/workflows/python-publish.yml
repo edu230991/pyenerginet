@@ -2,7 +2,7 @@ name: Upload PyEnerginet to Pypi
 
 on:
   release:
-    types: [published]
+    types: [released]
 
 permissions:
   contents: read

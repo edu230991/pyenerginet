@@ -34,10 +34,12 @@ jobs:
       - name: Get package version
         run: |
           python .github/workflows/append_env_var.py
-      - name: Create draft release
+      - name: Create release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >-
           gh release create
           '${{ env.VERSION_TAG }}'
           --repo '${{ github.repository }}'
+          --title 'Version ${{ env.VERSION_TAG }}'
+          --prerelease
