@@ -33,7 +33,7 @@ jobs:
         if: ${{ always() }}
       - name: Get package version
         run: |
-          python .github\workflows\append_env_var.py
+          python .github/workflows/append_env_var.py
       - name: Create draft release
         env:
           GITHUB_TOKEN: ${{ github.token }}
