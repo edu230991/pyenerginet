@@ -37,6 +37,6 @@ jobs:
         # create draft release
         run: >-
           gh release create
-          '${{ github.ref_name }}'
+          # '${{ github.ref_name }}'
           --repo '${{ github.repository }}'
           --draft
