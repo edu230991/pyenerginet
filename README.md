@@ -26,7 +26,8 @@ To see whether the current package version works:
 ```
 pip install pytest
 pip install -e .
-python -m pytest```
+python -m pytest
+```
 
 
 ### Contributing 
