@@ -67,7 +67,7 @@ jobs:
 
   publish-to-test-pypi:
     needs:
-      - build
+      - build-and-test
     runs-on: ubuntu-latest
     environment:
       name: testpypi
