@@ -16,19 +16,17 @@ python -m virtualenv env
 call env\Scripts\activate
 ```
 
-Install requirements:
+Install dependencies (as well as local version of `pyenerginet`):
 
 ```
-pip install -r requirements.txt
+pip install -e .
 ```
 
 To see whether the current package version works:
 ```
 pip install pytest
-pip install -e .
 python -m pytest
 ```
-
 
 ### Contributing 
 Please feel free to request contributor access to edu230991.

@@ -1,19 +1,19 @@
 [project]
 name = "pyenerginet"
-version = "0.1"
+version = "0.1.1"
 authors = [{ name = "Edoardo Simioni", email = "edu230991@gmail.com" }]
 description = "A package to extract data from Energinet and Energi Data Service"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
   "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
-dynamic = ["dependencies"]
-
-[tool.setuptools.dynamic]
-dependencies = { file = ["requirements.txt"] }
+dependencies = [
+  "numpy>=1.26.4,<1.27",
+  "pandas>=2.2.1,<2.3",
+  "requests>=2.31.0,<2.32",
+]
 
 [project.urls]
 Homepage = "https://github.com/edu230991/pyenerginet"
