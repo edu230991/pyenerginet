@@ -27,8 +27,8 @@ class EnerginetData(EnerginetBaseClass):
             url,
             start,
             end,
-            "PriceArea",
-            price_area,
+            key="PriceArea",
+            filter_value=price_area,
         )
         df = df.filter(like=currency).squeeze()
         return df
@@ -54,9 +54,9 @@ class EnerginetData(EnerginetBaseClass):
             url,
             start,
             end,
-            "MunicipalityNo",
-            municipality_no,
-            columns,
+            key="MunicipalityNo",
+            filter_value=municipality_no,
+            columns=columns,
         )
         return df
 
@@ -136,5 +136,12 @@ class EnerginetData(EnerginetBaseClass):
         :param columns: defaults to "all"
         """
         url = self.base_url + "/RegulatingBalancePowerdata"
-        df = self._pivot_request(url, start, end, "PriceArea", price_area, columns)
+        df = self._pivot_request(
+            url,
+            start,
+            end,
+            key="PriceArea",
+            filter_value=price_area,
+            columns=columns,
+        )
         return df

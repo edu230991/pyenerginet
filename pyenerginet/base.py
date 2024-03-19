@@ -71,7 +71,7 @@ class EnerginetBaseClass:
         """
         params = self._get_params(start, end, filter_key, filter_value)
         df = self._base_request(url, params)
-        df = df.tz_convert(start.tz)
+        df = df.tz_convert(start.tz).truncate(start, end)
 
         if columns != "all":
             df = df[columns]
@@ -100,6 +100,7 @@ class EnerginetBaseClass:
         df = self._select_columns_request(
             url, start, end, "all", filter_key, filter_value
         )
+
         if key is not None and key in df.columns:
             df = df.pivot(columns=key)
         if columns != "all":
