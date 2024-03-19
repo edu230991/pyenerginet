@@ -7,4 +7,4 @@ from pyenerginet import __version__
 env_file = os.getenv("GITHUB_ENV")
 
 with open(env_file, "a") as myfile:
-    myfile.write(f"VERSION_TAG={__version__}")
+    myfile.write(f"VERSION_TAG=v{__version__}")
