@@ -41,5 +41,5 @@ jobs:
           gh release create
           '${{ env.VERSION_TAG }}'
           --repo '${{ github.repository }}'
-          --title 'Version ${{ env.VERSION_TAG }}'
+          --title '${{ env.VERSION_TAG }}'
           --prerelease
