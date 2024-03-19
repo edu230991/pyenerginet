@@ -1,6 +1,11 @@
 name: Run tests and tag commit
 
-on: push
+on:
+  push:
+    branches:
+      - "main"
+    # paths:
+    #   - "**.py"
 
 permissions:
   contents: write
@@ -34,6 +39,7 @@ jobs:
       - name: Get package version
         run: |
           python .github/workflows/append_env_var.py
+      # only run
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ github.token }}
