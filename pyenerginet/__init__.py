@@ -1,7 +1,8 @@
-import re
-import requests
 import pandas as pd
+from importlib.metadata import version
 from pyenerginet.base import EnerginetBaseClass
+
+__version__ = version(__package__)
 
 
 class EnerginetData(EnerginetBaseClass):
