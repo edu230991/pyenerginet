@@ -151,7 +151,7 @@ def test_get_consumption_per_industry_code(
 )
 def test_get_res_forecast(area, tech, cols, res, start, end, energinetdata):
     """Tests the 'get_res_forecast' method"""
-    df = energinetdata.get_res_forecast(start, end, area, tech, cols, res)
+    df = energinetdata.get_res_forecast(start, end, area, tech, res, cols)
     assert df.shape[0]
     if isinstance(df, pd.DataFrame):
         # check that 1-column dataframes are turned into series
