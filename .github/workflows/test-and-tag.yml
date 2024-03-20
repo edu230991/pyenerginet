@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - "main"
-    # paths:
-    #   - "**.py"
+    paths:
+      - "**.py"
+      - "**.toml"
+      - "./pyenerginet/*"
 
 permissions:
   contents: write
