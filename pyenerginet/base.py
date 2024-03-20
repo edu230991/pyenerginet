@@ -10,8 +10,7 @@ class EnerginetBaseClass:
         self,
         start: pd.Timestamp,
         end: pd.Timestamp,
-        filter_key: str = None,
-        filter_value: str = None,
+        filters: dict = {},
     ) -> dict:
         """Returns standard request parameters
 
@@ -24,10 +23,15 @@ class EnerginetBaseClass:
             "offset": 0,
             "start": start.tz_convert("CET").strftime("%Y-%m-%dT%H:%M"),
             "end": end.tz_convert("CET").strftime("%Y-%m-%dT%H:%M"),
-            "sort": "HourUTC ASC",
         }
-        if filter_key is not None:
-            params["filter"] = f'{{"{filter_key}":["{filter_value}"]}}'
+        filter_list = []
+        for k, v in filters.items():
+            if v is not None:
+                v = [v] if not isinstance(v, list) else v
+                vlist = '","'.join([str(vv) for vv in v])
+                filter_list.append(f'"{k}":["{vlist}"]')
+        if len(filter_list):
+            params["filter"] = "{" + ",".join(filter_list) + "}"
         return params
 
     def _base_request(self, url: str, params: dict) -> pd.DataFrame:
@@ -40,15 +44,22 @@ class EnerginetBaseClass:
         r.raise_for_status()
 
         df = pd.DataFrame(r.json()["records"])
-        df.index = pd.to_datetime(
-            df["HourUTC"], format="%Y-%m-%dT%H:%M:%S"
-        ).dt.tz_localize("UTC")
-        df.index.name = None
-        df = df.drop(columns=["HourUTC", "HourDK"])
+        
+        time_cols = [col for col in df.columns if "UTC" in col]
+        dk_time_cols = [col.replace("UTC", "DK") for col in time_cols]
+        for col in time_cols:
+            df[col] = pd.to_datetime(
+                df[col], format="%Y-%m-%dT%H:%M:%S"
+            ).dt.tz_localize("UTC")
+        
+        df = df.set_index(time_cols, drop=True).drop(columns=dk_time_cols)
+        df.index.names = [col.replace("UTC", "") for col in time_cols]
+
         if "filter" in params:
             to_drop = re.findall(r'"(.*?)"', params["filter"])[0]
+
             df = df.drop(columns=to_drop)
-        return df
+        return df.sort_index()
 
     def _select_columns_request(
         self,
@@ -56,8 +67,7 @@ class EnerginetBaseClass:
         start: pd.Timestamp,
         end: pd.Timestamp,
         columns: str = "all",
-        filter_key: str = None,
-        filter_value: str = None,
+        filters: dict = {},
     ) -> pd.DataFrame:
         """Runs base request for given url formatting dataframe as timeseries
         and selecting a subset of columns.
@@ -69,13 +79,15 @@ class EnerginetBaseClass:
         :param filter_key: column name to apply filter to, defaults to None
         :param filter_value: value of filter to apply, defaults to None
         """
-        params = self._get_params(start, end, filter_key, filter_value)
+        params = self._get_params(start, end, filters)
         df = self._base_request(url, params)
-        df = df.tz_convert(start.tz).truncate(start, end)
+
+        level = 0 if isinstance(df.index, pd.MultiIndex) else None
+        df = df.tz_convert(start.tz, level=level).truncate(start, end)
 
         if columns != "all":
             df = df[columns]
-        return df
+        return df.squeeze()
 
     def _pivot_request(
         self,
@@ -83,8 +95,7 @@ class EnerginetBaseClass:
         start: pd.Timestamp,
         end: pd.Timestamp,
         columns: str = "all",
-        key: str = None,
-        filter_value: str = None,
+        filters: dict = {},
     ) -> pd.DataFrame:
         """Runs base request for given url formatting dataframe as timeseries
         and selecting a subset of columns, after pivoting in to make the data time-indexed.
@@ -93,20 +104,21 @@ class EnerginetBaseClass:
         :param start: dt start
         :param end: dt end
         :param columns: defaults to "all"
-        :param key: column name to apply filter to, and pivot around defaults to None
-        :param filter_value: value of filter to apply, defaults to None
+        :param filters: dictionary with filters to apply.
+            DataFrame will be pivoted around column names (keys) for which values are None.
+            DataFrame will be filtered where the columns specified in the keys are equal to
+            the values
         """
-        filter_key = key if filter_value is not None else None
-        df = self._select_columns_request(
-            url, start, end, "all", filter_key, filter_value
-        )
+        df = self._select_columns_request(url, start, end, "all", filters)
 
-        if key is not None and key in df.columns:
-            df = df.pivot(columns=key)
-        if columns != "all":
-            df = df[columns]
+        if isinstance(df, pd.DataFrame):
+            pivot_keys = [key for key in list(filters.keys()) if key in df.columns]
+            if pivot_keys:
+                df = df.pivot(columns=pivot_keys)
+            if columns != "all":
+                df = df[columns]
         if isinstance(df, pd.DataFrame):
             if isinstance(df.columns, pd.MultiIndex):
                 if len(df.columns.levels[0]) == 1:
                     df = df.droplevel(0, axis=1)
-        return df
+        return df.squeeze()
