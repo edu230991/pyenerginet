@@ -3,6 +3,11 @@ A python package to facilitate using public data from Energinet.
 Raw data available at https://www.energidataservice.dk/.
 
 ### Getting started
+
+#### Colab notebook
+You can test out the package and play around with it on [Colab](https://colab.research.google.com/github/edu230991/pyenerginet/blob/main/examples.ipynb).
+
+#### Setting up locally
 Clone repository:
 
 ```
