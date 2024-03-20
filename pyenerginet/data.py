@@ -326,6 +326,14 @@ class EnerginetData(EnerginetBaseClass):
         end: pd.Timestamp,
         columns: str = "all",
     ) -> pd.DataFrame:
+        """Retrieves live power system data from
+        https://www.energidataservice.dk/tso-electricity/PowerSystemRightNow
+
+        :param start: dt start
+        :param end: dt end
+        :param columns: defaults to "all". otherwise list of columns to return.
+            You can see the list of columns on the webpage
+        """
 
         url = self.base_url + "/PowerSystemRightNow"
         df = self._select_columns_request(url, start, end, columns)

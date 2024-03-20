@@ -44,14 +44,14 @@ class EnerginetBaseClass:
         r.raise_for_status()
 
         df = pd.DataFrame(r.json()["records"])
-        
+
         time_cols = [col for col in df.columns if "UTC" in col]
         dk_time_cols = [col.replace("UTC", "DK") for col in time_cols]
         for col in time_cols:
             df[col] = pd.to_datetime(
                 df[col], format="%Y-%m-%dT%H:%M:%S"
             ).dt.tz_localize("UTC")
-        
+
         df = df.set_index(time_cols, drop=True).drop(columns=dk_time_cols)
         df.index.names = [col.replace("UTC", "") for col in time_cols]
 
@@ -117,8 +117,11 @@ class EnerginetBaseClass:
                 df = df.pivot(columns=pivot_keys)
             if columns != "all":
                 df = df[columns]
+
+        # make sure there is no useless multiindex
         if isinstance(df, pd.DataFrame):
             if isinstance(df.columns, pd.MultiIndex):
-                if len(df.columns.levels[0]) == 1:
-                    df = df.droplevel(0, axis=1)
+                for i in range(len(df.columns.levels)):
+                    if len(df.columns.levels[i]) == 1:
+                        df = df.droplevel(i, axis=1)
         return df.squeeze()

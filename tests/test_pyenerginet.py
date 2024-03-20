@@ -156,6 +156,10 @@ def test_get_res_forecast(area, tech, cols, res, start, end, energinetdata):
     if isinstance(df, pd.DataFrame):
         # check that 1-column dataframes are turned into series
         assert df.shape[1] != 1
+        if isinstance(df.columns, pd.MultiIndex):
+            # check that multi-index level of lenght 1 are dropped
+            for level in df.columns.levels:
+                assert len(level) > 1
 
 
 @pytest.mark.parametrize(
