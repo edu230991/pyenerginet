@@ -156,3 +156,12 @@ def test_get_res_forecast(area, tech, cols, res, start, end, energinetdata):
     if isinstance(df, pd.DataFrame):
         # check that 1-column dataframes are turned into series
         assert df.shape[1] != 1
+
+
+@pytest.mark.parametrize(
+    "cols", ["all", "SolarPower", ["SolarPower", "OffshoreWindPower"]]
+)
+def test_get_power_system_now(cols, start, end, energinetdata):
+    """Tests the 'get_power_system_now' method"""
+    df = energinetdata.get_power_system_now(start, end, cols)
+    assert_timeseries(df, start)

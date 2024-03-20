@@ -319,3 +319,14 @@ class EnerginetData(EnerginetBaseClass):
             columns=columns,
         )
         return df
+
+    def get_power_system_now(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        columns: str = "all",
+    ) -> pd.DataFrame:
+
+        url = self.base_url + "/PowerSystemRightNow"
+        df = self._select_columns_request(url, start, end, columns)
+        return df
