@@ -4,6 +4,10 @@ from pyenerginet.base import EnerginetBaseClass
 
 
 class EnerginetData(EnerginetBaseClass):
+    category_dict = {
+        "production": ["forecast", "actual"],
+        "price": ["day_ahead", "imbalance"],
+    }
 
     def get_elspot_prices(
         self,
@@ -338,3 +342,84 @@ class EnerginetData(EnerginetBaseClass):
         url = self.base_url + "/PowerSystemRightNow"
         df = self._select_columns_request(url, start, end, columns)
         return df
+
+    def get_data(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        variable: str,
+        category: str,
+        price_area: str = None,
+        tech: str = None,
+        version: str = None,
+    ) -> pd.DataFrame:
+        """Easier function to use to get most relevant data
+
+        :param start: dt start
+        :param end: dt end
+        :param variable: one in ('production', 'price')
+        :param category: see self.category_dict for a list of options per variable
+        :param price_area: one in ('DK1', 'DK2'), defaults to both
+        :param tech: 'ofw' for offshore wind, 'onw' for onshore wind, 'spv' for solar
+        :param version: forecast version.
+            One in ('ForecastDayAhead', 'ForecastIntraday', 'Forecast5Hour',
+            'Forecast1Hour', 'ForecastCurrent') defaults to all
+        """
+        if variable == "production":
+            if category == "forecast":
+                cols = "all" if version is None else version
+                tech_names = {
+                    "ofw": "Offshore Wind",
+                    "onw": "Onshore Wind",
+                    "spv": "Solar",
+                }
+                return self.get_res_forecast(
+                    start, end, price_area, tech_names[tech], columns=cols
+                )
+            elif category == "actual":
+                # first try to get validated data
+                tech_names = {
+                    "ofw": "OffshoreWindGe100MW_MWh",
+                    "onw": "OnshoreWindGe50kW_MWh",
+                    "spv": "SolarPowerGe40kW_MWh",
+                }
+                use_unvalidated = False
+                try:
+                    df = self.get_prod_cons(
+                        start, end, price_area, validated=True, columns=tech_names[tech]
+                    ).dropna()
+                    if df.index[-1] < end - pd.to_timedelta("1h"):
+                        use_unvalidated = True
+                except:
+                    df = pd.DataFrame()
+                    use_unvalidated = True
+
+                if use_unvalidated:
+                    tech_names = {
+                        "ofw": "OffshoreWindPower",
+                        "onw": "OnshoreWindPower",
+                        "spv": "SolarPower",
+                    }
+                    df_unval = self.get_prod_cons(
+                        start,
+                        end,
+                        price_area,
+                        validated=False,
+                        columns=tech_names[tech],
+                    )
+                if len(df) & use_unvalidated:
+                    df = df.reindex(df_unval.index).fillna(df_unval)
+                elif len(df) == 0:
+                    df = df_unval.copy()
+                return df
+
+        elif variable == "price":
+            if category == "day_ahead":
+                return self.get_elspot_prices(start, end, price_area)
+            elif category == "imbalance":
+                cols = [
+                    "ImbalancePriceDKK",
+                    "BalancingPowerPriceUpDKK",
+                    "BalancingPowerPriceDownDKK",
+                ]
+                return self.get_balancing(start, end, price_area, columns=cols)
