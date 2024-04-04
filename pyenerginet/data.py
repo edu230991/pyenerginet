@@ -361,11 +361,15 @@ class EnerginetData(EnerginetBaseClass):
         :param category: see self.category_dict for a list of options per variable
         :param price_area: one in ('DK1', 'DK2'), defaults to both
         :param tech: 'ofw' for offshore wind, 'onw' for onshore wind, 'spv' for solar
-        :param version: forecast version.
+        :param version:
+            For forecasts:
             One in ('ForecastDayAhead', 'ForecastIntraday', 'Forecast5Hour',
             'Forecast1Hour', 'ForecastCurrent') defaults to all
+            For actuals: one in ('validated', 'unvalidated', 'bestof'). defaults to 'bestof'
         """
         if variable == "production":
+            if tech is None:
+                raise KeyError("tech must be specified")
             if category == "forecast":
                 cols = "all" if version is None else version
                 tech_names = {
@@ -383,18 +387,35 @@ class EnerginetData(EnerginetBaseClass):
                     "onw": "OnshoreWindGe50kW_MWh",
                     "spv": "SolarPowerGe40kW_MWh",
                 }
-                use_unvalidated = False
-                try:
-                    df = self.get_prod_cons(
-                        start, end, price_area, validated=True, columns=tech_names[tech]
-                    ).dropna()
-                    if df.index[-1] < end - pd.to_timedelta("1h"):
-                        use_unvalidated = True
-                except:
-                    df = pd.DataFrame()
-                    use_unvalidated = True
 
-                if use_unvalidated:
+                validated = version == "bestof" or version == "validated"
+                if validated:
+                    try:
+                        df = self.get_prod_cons(
+                            start,
+                            end,
+                            price_area,
+                            validated=validated,
+                            columns=tech_names[tech],
+                        ).dropna()
+                        if version == "bestof":
+                            data_complete = df.index[-1] >= end - pd.to_timedelta("1h")
+                            if not data_complete:
+                                # need to load some unvalidated data to complete
+                                validated = False
+                    except:
+                        validated = False
+                        version = "unvalidated"
+                        df = pd.DataFrame()
+                        warn(
+                            UserWarning(
+                                "No validated data found for this interval, using unvalidated."
+                            )
+                        )
+
+                if not validated:
+                    if version == "bestof":
+                        start = df.index[-1]
                     tech_names = {
                         "ofw": "OffshoreWindPower",
                         "onw": "OnshoreWindPower",
@@ -407,10 +428,13 @@ class EnerginetData(EnerginetBaseClass):
                         validated=False,
                         columns=tech_names[tech],
                     )
-                if len(df) & use_unvalidated:
-                    df = df.reindex(df_unval.index).fillna(df_unval)
-                elif len(df) == 0:
-                    df = df_unval.copy()
+                    if version == "bestof":
+                        # we are asking for best-of version of the data,
+                        # so append the two and remove duplicates
+                        df = pd.concat([df, df_unval]).dropna()
+                        df = df[~df.index.duplicated()].copy()
+                    else:
+                        df = df_unval.copy()
                 return df
 
         elif variable == "price":

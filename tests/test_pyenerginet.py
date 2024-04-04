@@ -169,3 +169,73 @@ def test_get_power_system_now(cols, start, end, energinetdata):
     """Tests the 'get_power_system_now' method"""
     df = energinetdata.get_power_system_now(start, end, cols)
     assert_timeseries(df, start)
+
+
+@pytest.mark.parametrize(
+    "kwargs,end,expect_nans",
+    [
+        (
+            {
+                "variable": "production",
+                "category": "actual",
+                "price_area": "DK1",
+                "tech": "ofw",
+                "version": "bestof",
+            },
+            pd.Timestamp.utcnow().floor("d"),
+            False,
+        ),
+        (
+            {
+                "variable": "production",
+                "category": "actual",
+                "price_area": "DK1",
+                "tech": "onw",
+                "version": "unvalidated",
+            },
+            pd.Timestamp.utcnow().floor("d"),
+            False,
+        ),
+        (
+            {
+                "variable": "production",
+                "category": "actual",
+                "price_area": None,
+                "tech": "spv",
+                "version": "validated",
+            },
+            pd.Timestamp.utcnow().floor("d"),
+            True,
+        ),
+        (
+            {
+                "variable": "price",
+                "category": "day_ahead",
+                "price_area": "DK2",
+                "tech": None,
+                "version": None,
+            },
+            pd.Timestamp.utcnow().floor("d"),
+            True,
+        ),
+        (
+            {
+                "variable": "price",
+                "category": "imbalance",
+                "price_area": None,
+                "tech": None,
+                "version": None,
+            },
+            pd.Timestamp.utcnow().floor("d"),
+            True,
+        ),
+    ],
+)
+def test_get_data(kwargs, end, expect_nans, energinetdata):
+    """Tests the general get_data method"""
+    start = end - pd.to_timedelta("15d")
+    df = energinetdata.get_data(start, end, **kwargs)
+    assert_timeseries(df, start)
+    assert df.index.duplicated().sum() == 0
+    if not expect_nans:
+        assert df.isna().sum() == 0
