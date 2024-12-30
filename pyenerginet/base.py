@@ -1,7 +1,10 @@
+import os
 import re
 import requests
 import pandas as pd
 from requests_cache import CachedSession
+
+PACKAGE_DIR = os.path.dirname(__file__)
 
 
 class EnerginetBaseClass:
@@ -9,7 +12,7 @@ class EnerginetBaseClass:
 
     def __init__(
         self,
-        cache_path: str = ".cache",
+        cache_path: str = os.path.join(PACKAGE_DIR, ".cache"),
         cache_backed: str = "filesystem",
         cache_expire_after: int = 3600,
     ):

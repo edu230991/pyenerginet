@@ -23,7 +23,7 @@ def assert_timeseries(df: pd.DataFrame, start: pd.Timestamp):
     """Checks that returned data is time-indexed and meets our requirements"""
     assert df.shape[0]
     assert isinstance(df.index, pd.DatetimeIndex)
-    assert df.index.tz == start.tz
+    assert str(df.index.tz) == str(start.tz)
     if isinstance(df, pd.DataFrame):
         # check that 1-column dataframes are turned into series
         assert df.shape[1] != 1
