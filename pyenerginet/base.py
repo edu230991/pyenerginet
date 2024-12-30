@@ -1,10 +1,35 @@
 import re
 import requests
 import pandas as pd
+from requests_cache import CachedSession
 
 
 class EnerginetBaseClass:
     base_url = "https://api.energidataservice.dk/dataset"
+
+    def __init__(
+        self,
+        cache_path: str = ".cache",
+        cache_backed: str = "filesystem",
+        cache_expire_after: int = 3600,
+    ):
+        """Initializes class with caching if needed
+
+        :param cache_path: the path to the cache, defaults to ".cache".
+            If None, no caching is performed.
+        :param cache_backed: Defaults to "filesystem".
+            See https://requests-cache.readthedocs.io/en/stable/user_guide/backends.html
+            for more info
+        :param cache_expire_after: cache expiration in seconds, defaults to 3600
+        """
+        if cache_path is not None:
+            self.session = CachedSession(
+                cache_name=cache_path,
+                backend=cache_backed,
+                expire_after=cache_expire_after,
+            )
+        else:
+            self.session = requests.Session()
 
     def _get_params(
         self,
@@ -40,7 +65,7 @@ class EnerginetBaseClass:
         :param url: url to request
         :param params: request parameters
         """
-        r = requests.get(url, params=params)
+        r = self.session.get(url, params=params)
         r.raise_for_status()
 
         df = pd.DataFrame(r.json()["records"])

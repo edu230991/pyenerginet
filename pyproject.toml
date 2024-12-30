@@ -1,6 +1,6 @@
 [project]
 name = "pyenerginet"
-version = "0.2.4"
+version = "0.3"
 authors = [{ name = "Edoardo Simioni", email = "edu230991@gmail.com" }]
 description = "A package to extract data from Energinet and Energi Data Service"
 readme = "README.md"
@@ -13,6 +13,7 @@ dependencies = [
   "numpy>=1.26.4,<1.27",
   "pandas>=2.2.1,<2.3",
   "requests>=2.31.0,<2.32",
+  "requests_cache>=1.2.1,<2"
 ]
 
 [project.urls]
