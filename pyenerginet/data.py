@@ -343,6 +343,32 @@ class EnerginetData(EnerginetBaseClass):
         df = self._select_columns_request(url, start, end, columns)
         return df
 
+    def get_imbalance_price(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        price_area: str = None,
+        columns: str = "all",
+    ) -> pd.DataFrame:
+        """Gets balancing data from
+        https://www.energidataservice.dk/tso-electricity/RegulatingBalancePowerdata
+
+        :param start: dt start
+        :param end: dt end
+        :param price_area: one in ('DK1', 'DK2'), defaults to None, i.e. both
+        :param columns: defaults to "all". otherwise list of columns to return.
+            You can see the list of columns on the webpage
+        """
+        url = self.base_url + "/ImbalancePrice"
+        df = self._pivot_request(
+            url,
+            start,
+            end,
+            filters={"PriceArea": price_area},
+            columns=columns,
+        )
+        return df
+
     def get_data(
         self,
         start: pd.Timestamp,
@@ -443,7 +469,5 @@ class EnerginetData(EnerginetBaseClass):
             elif category == "imbalance":
                 cols = [
                     "ImbalancePriceDKK",
-                    "BalancingPowerPriceUpDKK",
-                    "BalancingPowerPriceDownDKK",
                 ]
-                return self.get_balancing(start, end, price_area, columns=cols)
+                return self.get_imbalance_price(start, end, price_area, columns=cols)
