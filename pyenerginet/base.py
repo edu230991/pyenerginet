@@ -76,9 +76,7 @@ class EnerginetBaseClass:
         time_cols = [col for col in df.columns if "UTC" in col]
         dk_time_cols = [col.replace("UTC", "DK") for col in time_cols]
         for col in time_cols:
-            df[col] = pd.to_datetime(
-                df[col], format="%Y-%m-%dT%H:%M:%S"
-            ).dt.tz_localize("UTC")
+            df[col] = pd.to_datetime(df[col], format="ISO8601").dt.tz_localize("UTC")
 
         df = df.set_index(time_cols, drop=True).drop(columns=dk_time_cols)
         df.index.names = [col.replace("UTC", "") for col in time_cols]

@@ -1,6 +1,6 @@
 [project]
 name = "pyenerginet"
-version = "0.4"
+version = "0.5"
 authors = [{ name = "Edoardo Simioni", email = "edu230991@gmail.com" }]
 description = "A package to extract data from Energinet and Energi Data Service"
 readme = "README.md"

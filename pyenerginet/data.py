@@ -369,6 +369,108 @@ class EnerginetData(EnerginetBaseClass):
         )
         return df
 
+    def get_day_ahead_prices(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        price_area: str = None,
+        columns: str = "all",
+    ) -> pd.DataFrame:
+        """Gets quarter-hourly day ahead price data from
+        https://www.energidataservice.dk/tso-electricity/DayAheadPrices
+
+        :param start: dt start
+        :param end: dt end
+        :param price_area: one in ('DK1', 'DK2', 'DE', 'FI', 'NO', 'SE'), defaults to None, i.e. both
+        :param columns: defaults to "all". otherwise list of columns to return.
+            You can see the list of columns on the webpage
+        """
+        url = self.base_url + "/DayAheadPrices"
+        df = self._pivot_request(
+            url,
+            start,
+            end,
+            filters={"PriceArea": price_area},
+            columns=columns,
+        )
+        return df
+
+    def get_afrr_activation(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        price_area: str = None,
+        columns: str = "all",
+    ):
+        """Retrieves second-by-second aFRR activation data (volume and price)
+
+        :param start: dt start
+        :param end: dt end
+        :param price_area: DK1 or DK2, defaults to None
+        :param columns: defaults to "all". otherwise list of columns to return.
+        :return: activation data
+        """
+        url = self.base_url + "/AfrrEnergyActivation"
+        df = self._pivot_request(
+            url,
+            start,
+            end,
+            filters={"PriceArea": price_area},
+            columns=columns,
+        )
+        return df
+
+    def get_afrr_atc(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        price_area: str = None,
+        columns: str = "all",
+    ):
+        """Retrieves second-by-second ATC (transfer capacity) between Denmark and other borders.
+
+        :param start: dt start
+        :param end: dt end
+        :param price_area: DK1 or DK2, defaults to None
+        :param columns: defaults to "all". otherwise list of columns to return.
+        :return: afrr atc data
+        """
+        url = self.base_url + "/AfrrBorderAvailableTransferCapacity"
+        df = self._pivot_request(
+            url,
+            start,
+            end,
+            filters={"PriceArea": price_area},
+            columns=columns,
+        )
+        return df
+
+    def get_afrr_capacity(
+        self,
+        start: pd.Timestamp,
+        end: pd.Timestamp,
+        price_area: str = None,
+        columns: str = "all",
+    ):
+        """Retrieves the aFRR capacity price in the Nordic markets.
+
+        :param start: dt start
+        :param end: dt end
+        :param price_area: DK1, DK2, FI, NO1 etc. Defaults to None
+        :param columns: defaults to "all". otherwise list of columns to return.
+        :return: afrr capacity data
+        """
+
+        url = self.base_url + "/AfrrReservesNordic"
+        df = self._pivot_request(
+            url,
+            start,
+            end,
+            filters={"PriceArea": price_area},
+            columns=columns,
+        )
+        return df
+
     def get_data(
         self,
         start: pd.Timestamp,
